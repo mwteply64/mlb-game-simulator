@@ -1,0 +1,19 @@
+# Data is rebuilt by the fetch/download scripts and not committed
+data/
+logs/
+predictions/
+historical testing/
+old_results_archive/
+*.csv
+*.parquet
+*.xlsx
+*.docx
+*_log.txt
+*.log
+*checkpoint.json
+live_forward_validation_summary*.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
