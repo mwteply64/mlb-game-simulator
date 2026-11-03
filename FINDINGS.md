@@ -1094,3 +1094,50 @@ Two fetch bugs worth remembering: the schedule endpoint returns no team
 abbreviation without `hydrate=team` (every park keyed to "" and nothing
 matched), and Open-Meteo's archive rejects a future end date, which silently
 failed all thirty 2026 parks until the range was clamped to yesterday.
+
+## Full 2026 season, and the closing line again (2026-11-03)
+
+**Data gap found first.** The first full-season run simulated only 2,209 of
+2,429 games, and only 525 of 742 recorded closing lines found a match. Three
+Statcast chunks had been written mid-window during the season (Aug 1-15 on the
+15th, Aug 16-31 on the 29th, Sep 1-15 on the 4th) and were never refreshed,
+because `fetch_statcast.py` skipped any chunk already on disk and
+`--refresh-last` only touches the final one. 217 games were silently absent all
+September -- from ratings, props, and DFS alike. Fixed: a chunk whose file was
+written on or before its window's last day is now treated as partial and
+re-downloaded. The tell was a join count, not an error.
+
+**Simulator, all 2,429 games, shipped configuration** (`--dispersion 0.15
+--expand 1.2`, nothing re-tuned on 2026):
+
+| | value |
+|---|---|
+| log loss | 0.68647 (home-rate baseline 0.69160) |
+| Brier | 0.24667 (baseline 0.24923) |
+| accuracy | 55.29% (always-home 52.78%) |
+| runs per team-game | 4.466 simulated, 4.480 actual |
+| total-runs std ratio | 1.0082 |
+
+The run distribution is the strongest result in the project: mean within 0.3%
+and spread within 1% on a season no constant was selected on. Win probability
+is over-confident at the extremes -- games priced above 65% won 61.3%, below
+35% won 20.0% (n=35) -- the same under-dispersion of team strength the x1.2
+expansion only partly corrects.
+
+**Against the closing line, 741 games (Jul 29 - Sep 27):**
+
+| | log loss | Brier | accuracy |
+|---|---|---|---|
+| market | 0.67175 | 0.23960 | 58.2% |
+| simulator | 0.68249 | 0.24471 | 57.4% |
+| Elo | 0.67702 | 0.24212 | 56.3% |
+
+Every blend weight on the simulator makes the market worse, monotonically, as
+on 52 games in August; P(blend beats market) = 0.09. Elo and sim+Elo are flat
+(best weight 0.05, intervals centred on zero). Log-odds correlation with the
+market rose to +0.806 for the simulator and +0.833 for Elo.
+
+**Verdict, now on 14x the sample:** the August null holds. The closing line
+contains everything both models know about who wins. Remaining value is where
+the simulator has a mechanism the market does not price as sharply -- totals
+and props -- not moneylines.

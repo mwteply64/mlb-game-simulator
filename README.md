@@ -25,10 +25,17 @@ and what didn't. `FINDINGS.md` is the lab notebook for those decisions.
   41.5% of all outs, not the third the first version assumed.
 - **Half of all changes that improved their own metric made the whole
   simulator worse**, so every change is verified end to end before shipping.
-- **Honest null result against the market:** over 1,667 games of the 2026
-  season (through early August), the closing line already contains everything the simulator knows about who wins.
-  An apparent gain from blending in Elo turned out to be small-sample noise,
-  which was caught by extending the blend sweep all the way to weight 1.0.
+- **Full 2026 season, nothing re-tuned:** run totals within 0.3% of actual
+  (8.93 vs 8.96 per game) with the right spread, and 55.3% winners against
+  52.8% for always picking the home team.
+- **Honest null result against the market:** over 741 games with a recorded
+  closing line, blending in any amount of the simulator makes the betting
+  market's predictions worse. The line already contains everything the model
+  knows about who wins. An earlier apparent gain from Elo turned out to be
+  small-sample noise, caught by extending the blend sweep to weight 1.0.
+- **A silent data gap, caught by a row count.** 217 September games were
+  missing because partly downloaded data chunks were never refreshed. Nothing
+  errored; a join that matched 525 games instead of 742 gave it away.
 - **Eight silent bugs**, each producing plausible-looking output, are written
   up in `FINDINGS.md`. One produced an in-sample AUC of 0.996 and looked like a
   breakthrough.
@@ -76,10 +83,22 @@ the same season used to report the result. Re-selecting honestly cost 0.0007
 AUC and 0.0003 nats — small, but the figures above no longer need an asterisk.
 
 **The market is still ahead** — about 0.007 nats and 2.4 accuracy points, though
-the market figure is from 2021 (the free archive stops there). A within-season
-chain through Elo as a common reference puts the true gap nearer **0.0014 nats**,
-since 2021 was a more predictable season for everyone. A prospective comparison
-on 2026 games is accumulating and will settle it.
+the market figure is from 2021 (the free archive stops there). The prospective
+2026 comparison settled it: on 741 games with a recorded DraftKings closing
+line, the market posted log loss 0.67175 against the simulator's 0.68249, and no
+blend weight improved on the market alone. Details in `FINDINGS.md`.
+
+### 2026 season
+
+All 2,429 regular-season games, shipped configuration, nothing re-tuned:
+
+| model | log loss | accuracy |
+|---|---|---|
+| always home | 0.69160 | 52.78% |
+| **simulator** | **0.68647** | **55.29%** |
+
+Runs per team-game 4.466 simulated against 4.480 actual; total-runs standard
+deviation ratio 1.0082.
 
 ### The two constants behaved differently
 

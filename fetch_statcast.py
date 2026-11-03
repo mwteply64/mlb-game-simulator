@@ -66,7 +66,15 @@ def fetch_season(year, refresh_last=False, force=False):
     for i, (start, end) in enumerate(chunks):
         path = config.raw_chunk_path(year, i)
         is_last = i == len(chunks) - 1
-        if os.path.exists(path) and not force and not (refresh_last and is_last):
+        # A chunk written on or before its window's last day was cut short by
+        # `today` and is missing the rest of the window. Skipping it because the
+        # file exists silently dropped 217 games from 2026 (Aug 15, Aug 29-31,
+        # Sep 4-15) until the full-season market test came up short.
+        written = (dt.date.fromtimestamp(os.path.getmtime(path))
+                   if os.path.exists(path) else None)
+        partial = written is not None and written <= dt.date.fromisoformat(end)
+        if (written is not None and not force and not partial
+                and not (refresh_last and is_last)):
             continue
 
         t0 = time.time()
